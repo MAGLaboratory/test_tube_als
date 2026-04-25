@@ -29,8 +29,6 @@
  * 			  PA1 (1) -- UTX_2
  * 			  PA2 (3) -- Dir
  *
- * 			  PC4 (7) -- Relay Output
- *
  */
 
 #include "debug.h"
@@ -39,19 +37,6 @@
 #include <PetitModbus.h>
 
 /* Constants */
-
-// Character LUT
-// 0 1 2 3
-// 4 5 6 7
-// 8 9 A b
-// C d E F
-const u8 char_lut[] __attribute__((section(".text.consts")))=
-{
-	0b00111111, 0b00000110, 0b01011011, 0b01001111,
-	0b01100110, 0b01101101,	0b01111101, 0b00000111,
-	0b01111111, 0b01101111, 0b01110111, 0b01111100,
-	0b00111001, 0b01011110, 0b01111001, 0b01110001
-};
 
 /* Macros */
 
@@ -170,153 +155,16 @@ void IIC_RX(u8 addr, u8 *data)
 
 	I2C_GenerateSTOP( I2C1, ENABLE);
 }
-/*********************************************************************
- * @fn      char_lut_fun
- *
- * @brief   Looks up the BCD in the character LUT
- *
- * @return  none
- */
-u8 char_lut_fun(u8 d)
-{
-	if (d < 16)
-	{
-		return char_lut[d];
-	}
-	else
-	{
-		return 0;
-	}
-}
 
-/*********************************************************************
- * @fn      write_digit
- *
- * @brief   Outputs the character data to the ch422
- *
- * @return  none
- */
-void write_digit(u8 digit, u8 chd)
-{
-	u8 addr = 0;
-	switch (digit)
-	{
-	case 0:
-		addr = C_CH455_ADDR_W_IO0;
-		break;
-	case 1:
-		addr = C_CH455_ADDR_W_IO1;
-		break;
-	case 2:
-		addr = C_CH455_ADDR_W_IO2;
-		break;
-	case 3:
-		addr = C_CH455_ADDR_W_IO3;
-		break;
-	default:
-		return;
-	}
-	IIC_TX(addr, chd);
-}
-
-typedef enum
-{
-	eRelaySMOff = 0,
-	eRelaySMOnFull,
-	eRelaySMOnReduced,
-	eRelaySMOnFullReseat
-} T_RELAY_SM_STATE;
-
-
-typedef struct
-{
-	uint32_t cas; /*< count at start */
-	T_RELAY_SM_STATE state;
-} T_RELAY_SM_OUTPUT;
-
-void RelaySM(
-	uint8_t relayOut,
-	uint32_t msCounter,
-	T_RELAY_SM_OUTPUT* out
-)
-{
-	/* Transitions */
-	if (relayOut != 0)
-	{
-		switch (out->state)
-		{
-		case eRelaySMOff:
-			out->state = eRelaySMOnFull;
-			out->cas = msCounter;
-			break;
-		case eRelaySMOnFull:
-			if (msCounter - out->cas >= 800u)
-			{
-				out->state = eRelaySMOnReduced;
-				out->cas = msCounter;
-			}
-			break;
-		case eRelaySMOnReduced:
-			if (msCounter - out->cas >= (40000u-800u))
-			{
-				out->state = eRelaySMOnFullReseat;
-				out->cas = msCounter;
-			}
-			break;
-		case eRelaySMOnFullReseat:
-			if (msCounter - out->cas >= 800u)
-			{
-				out->state = eRelaySMOnReduced;
-				out->cas = msCounter;
-			}
-			break;
-		default:
-			out->state = eRelaySMOff;
-			break;
-		}
-	}
-	else
-	{
-		out->state = eRelaySMOff;
-	}
-
-	/* Output */
-	/* Since there are only two relays and the compare channel is inverted,
-	 * we can calculate the channel number by XORing the 0th bit.
-	 */
-	switch (out->state)
-	{
-	case eRelaySMOff:
-		TIM1->CH4CVR = 0u;
-		break;
-	case eRelaySMOnFullReseat:
-	case eRelaySMOnFull:
-		TIM1->CH4CVR = 100u;
-		break;
-	case eRelaySMOnReduced:
-		TIM1->CH4CVR = 85u;
-		break;
-	}
-}
 
 void PetitPortDirTx(void)
 {
-#if defined(HMI_PCB)
 	GPIOA->BSHR = GPIO_Pin_2;
-#endif // HMI_PCB
-#if defined(BOB)
-	GPIOD->BSHR = GPIO_Pin_4;
-#endif // BOB
 }
 
 void PetitPortDirRx(void)
 {
-#if defined(HMI_PCB)
 	GPIOA->BSHR = GPIO_Pin_2 << 16U;
-#endif // HMI_PCB
-#if defined(BOB)
-	GPIOD->BSHR = GPIO_Pin_4 << 16U;
-#endif // BOB
 }
 
 void PetitUserTxBegin(pu8_t data)
@@ -348,8 +196,6 @@ void PetitT15TimerStop(void)
  */
 int main(void)
 {
-	u8 cur_disp[4U];
-	T_RELAY_SM_OUTPUT srelay;
 	SystemCoreClockUpdate();
 
 	APP_GPIO_Init();
@@ -401,32 +247,6 @@ int main(void)
 		// process modbus
 		PETIT_MODBUS_Process(&Petit);
 
-		for(u8 i = 0; i < 4U; i++)
-		{
-			if (iic_act == true)
-			{
-				break;
-			}
-			// find out what to display (encoded in 7-segment)
-			// two bytes per register so compute which register the byte is in
-			u8 disp = i & 0x1 ? PetitRegisters[i >> 1u] & ((1 << 8U) - 1U)
-					: PetitRegisters[i >> 1u] >> 8U;
-			// the display is updated on two conditions
-			// the "clock" hits the display digit once a second
-			// the requested display does not match what is currently displayed
-			if ((t1_count & ((1U << 12U) - 1U)) == (i << 10U) 
-					|| disp != cur_disp[i])
-			{
-				write_digit(i, disp);
-				iic_act = true;
-				cur_disp[i] = disp;
-			}
-		}
-
-		// coil output
-		// the upper 16 bits are for bit clear
-		// the lower 16 are for bit setting
-		RelaySM(PetitCoils[0u], t1_count, &srelay);
 
 		// increment by one to indicate one execution cycle
 		last_t1_count += 1U;

@@ -70,7 +70,6 @@ void UART_Init(void)
 		RCC_APB2Periph_GPIOD |
 		RCC_APB2Periph_AFIO, ENABLE);
 
-#if defined(HMI_PCB)
 	// pin 1 with PD6 is used as the UART half-duplex pin
 	// this pin is high by default.
 	GPIOD->BSHR = GPIO_Pin_6;
@@ -80,21 +79,6 @@ void UART_Init(void)
 	GPIO_Init(GPIOD, &GPIO_InitStructure);
 
 	GPIO_PinRemapConfig(GPIO_PartialRemap2_USART1, ENABLE);
-#endif //HMI PCB
-
-#if defined(BOB)
-	// Pin 2 PD5
-	GPIOD->BSHR = GPIO_Pin_5;
-	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_5;
-	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP;
-	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_2MHz;
-	GPIO_Init(GPIOD, &GPIO_InitStructure);
-
-	// Pin 3 PD6
-	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_6;
-	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPU;
-	GPIO_Init(GPIOD, &GPIO_InitStructure);
-#endif // BOB
 
 	USART_InitStructure.USART_BaudRate = 38400;
 	USART_InitStructure.USART_WordLength = USART_WordLength_8b;
@@ -107,9 +91,8 @@ void UART_Init(void)
 	USART_Init(USART1, &USART_InitStructure);
 	USART_Cmd(USART1, ENABLE);
 
-#if defined(HMI_PCB)
 	USART_HalfDuplexCmd(USART1, ENABLE);
-#endif // HMI_PCB
+
 	// interrputs
 	USART_ITConfig(USART1, USART_IT_RXNE, ENABLE);
 	USART1->CTLR1 |= USART_CTLR1_TCIE;
@@ -132,7 +115,6 @@ void APP_GPIO_Init(void)
 			RCC_APB2Periph_GPIOC |
 			RCC_APB2Periph_GPIOD, ENABLE);
 
-#if defined(HMI_PCB)
 	// Pin 1 is handled by the UART function
 	
 	// Pin 2 is the VSS pin
@@ -149,95 +131,7 @@ void APP_GPIO_Init(void)
 	//
 	// Pin 6 is handled by the I2C function
 	//
-	// Pin 7: OUT (PC4)
-	// TODO: PWM?
-	// Pin 7 is on T1CH4
-	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_4;
-	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP;
-	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_30MHz;
-	GPIO_Init(GPIOC, &GPIO_InitStructure);
-#endif // HMI_PCB
-#if defined(BOB)
-	// Pin 1 is DIR (PD4)
-	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_4;
-	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
-	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_2MHz;
-	GPIO_Init(GPIOD, &GPIO_InitStructure);
-
-	// Pin 2 is handled by the UART function
-
-	// Pin 3 is handled by the UART function
-
-	// Pin 4 is the reset pin
-
-	// Pin 5 is handled by the oscillator
-
-	// Pin 6 is handled by the oscillator
-
-	// Pin 7 is the VSS pin
-
-	// Pin 8 PD0
-	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_0;
-	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
-	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
-	GPIO_Init(GPIOD, &GPIO_InitStructure);
-
-	// Pin 9 is the VDD pin
-
-	// Pin 10 PC0
-	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_0;
-	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
-	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
-	GPIO_Init(GPIOC, &GPIO_InitStructure);
-
-	// Pin 11 is handled in the I2C function
-
-	// Pin 12 is handled in the I2C function
-
-	// Pin 13 PC3
-	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_3;
-	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
-	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
-	GPIO_Init(GPIOC, &GPIO_InitStructure);
-
-	// Pin 14 is PC4 which is used for the relay
-	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_4;
-	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP;
-	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_2MHz;
-	GPIO_Init(GPIOC, &GPIO_InitStructure);
-
-	// Pin 15 is PC5
-	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_5;
-	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
-	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
-	GPIO_Init(GPIOC, &GPIO_InitStructure);
-
-	// Pin 16 is PC6
-	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_6;
-	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
-	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
-	GPIO_Init(GPIOC, &GPIO_InitStructure);
-
-	// Pin 17 is PC7 
-	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_7;
-	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
-	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
-	GPIO_Init(GPIOC, &GPIO_InitStructure);
-
-	// Pin 18 is SWIO
-
-	// Pin 19 PD2
-	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_2;
-	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
-	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
-	GPIO_Init(GPIOD, &GPIO_InitStructure);
-
-	// Pin 20 is PD3
-	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_3;
-	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
-	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
-	GPIO_Init(GPIOD, &GPIO_InitStructure);
-#endif // BOB
+	// Pin 7 is unused (PC4)
 }
 
 /*********************************************************************
@@ -247,21 +141,17 @@ void APP_GPIO_Init(void)
  *
  * The system clock should be 4 kHz in order to satisfy the minimum 250 us
  * common denominator from T_1.5 and T_3.5 on modbus.
- * The system clock would have to be 16 kHz to satisfy the relay PWM drive
- * requirement.  This would force the timer 1 ISR to divide the call rate by 4
+ * This would force the timer 1 ISR to divide the call rate by 4
  * {system clock} / {desired fcy} = {scaler}
  * 24e6 / 16e3 = 1 500
  * {prescaler} * {period} = {scale}
  * 15 * 100 / 1 500
  *
- * Also, 100 is a good period rate for the PWM drive because it will directly
- * represent a duty cycle percentage.
  * @return  none
  */
 void TIME_Init(void)
 {
 	TIM_TimeBaseInitTypeDef TIM_TimeBaseInitStructure;
-	TIM_OCInitTypeDef TIM_OCInitStructure;
 
 	RCC_APB2PeriphClockCmd(RCC_APB2Periph_TIM1, ENABLE);
 
@@ -278,21 +168,6 @@ void TIME_Init(void)
 	TIM_ARRPreloadConfig(TIM1, ENABLE);
 	TIM_InternalClockConfig(TIM1);
 	TIM_SelectOutputTrigger(TIM1, TIM_TRGOSource_Update);
-
-	// configure output compare
-	TIM_OCInitStructure.TIM_OutputNState = TIM_OutputNState_Disable;
-	TIM_OCInitStructure.TIM_OutputState = TIM_OutputState_Enable;
-	TIM_OCInitStructure.TIM_OCNIdleState = TIM_OCNIdleState_Reset;
-	TIM_OCInitStructure.TIM_OCIdleState = TIM_OCIdleState_Reset;
-	TIM_OCInitStructure.TIM_OCMode = TIM_OCMode_PWM1;
-	TIM_OCInitStructure.TIM_OCNPolarity = TIM_OCNPolarity_High;
-	TIM_OCInitStructure.TIM_OCPolarity = TIM_OCPolarity_High;
-	TIM_OCInitStructure.TIM_Pulse = 0U;
-
-	TIM_OC4Init(TIM1, &TIM_OCInitStructure);
-	TIM_CtrlPWMOutputs(TIM1, ENABLE);
-	TIM_OC4PreloadConfig(TIM1, TIM_OCPreload_Enable);
-	TIM1->CH4CVR = 0u;
 
 	// configure interrupts
 	TIM_ClearFlag(TIM1, TIM_FLAG_Update);
