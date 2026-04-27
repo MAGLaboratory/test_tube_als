@@ -1,3 +1,24 @@
+// address
+#define C_TSL2561_ADDR (0x72)
+
+// command register
+#define C_TSL2561_CMD_REG (1u << 7u)
+#define C_TSL2561_CMD_CLEAR (1u << 6u)
+#define C_TSL2561_CMD_WORD (1u << 5u)
+#define C_TSL2561_CMD_BLOCK (1u << 4u)
+#define C_TSL2561_CMD_ADDR_CR (0x0u)
+#define C_TSL2561_CMD_ADDR_TM (0x1u)
+#define C_TSL2561_CMD_ADDR_TLL (0x2u)
+#define C_TSL2561_CMD_ADDR_TLH (0x3u)
+#define C_TSL2561_CMD_ADDR_THL (0x4u)
+#define C_TSL2561_CMD_ADDR_THH (0x5u)
+#define C_TSL2651_CMD_ADDR_INT (0x6u)
+#define C_TSL2561_CMD_ADDR_ID (0xAu)
+#define C_TSL2561_CMD_ADDR_D0L (0xCu)
+#define C_TSL2561_CMD_ADDR_D0H (0xDu)
+#define C_TSL2561_CMD_ADDR_D1L (0xEu)
+#define C_TSL2561_CMD_ADDR_D1H (0xFu)
+
 // system parameter bitfield indices
 #define C_CH455_ADDR_SP (0x48)
 #define C_CH455_SP_KOFF (7u)

@@ -4,8 +4,8 @@
 		{
 			"type": "mrs-debugger",
 			"request": "launch",
-			"name": "din_box_hmi",
-			"cwd": "c:\\Users\\Brandon\\Nextcloud\\engineering\\2025\\din_box_hmi",
+			"name": "test_tube_als",
+			"cwd": "c:\\Users\\Brandon\\Nextcloud\\engineering\\2026\\test_tube_als",
 			"openOCDCfg": {
 				"useLocalOpenOCD": true,
 				"executable": "c:/MounRiver/MounRiver_Studio2/resources/app/resources/win32/components/WCH/OpenOCD/OpenOCD/bin/openocd.exe",
@@ -39,8 +39,8 @@
 					"additionalCommands": []
 				},
 				"loadedFiles": {
-					"executableFile": "c:\\Users\\Brandon\\Nextcloud\\engineering\\2025\\din_box_hmi\\obj\\din_box_hmi.elf",
-					"symbolFile": "c:\\Users\\Brandon\\Nextcloud\\engineering\\2025\\din_box_hmi\\obj\\din_box_hmi.elf",
+					"executableFile": "c:\\Users\\Brandon\\Nextcloud\\engineering\\2026\\test_tube_als\\obj\\test_tube_als.elf",
+					"symbolFile": "c:\\Users\\Brandon\\Nextcloud\\engineering\\2026\\test_tube_als\\obj\\test_tube_als.elf",
 					"executableFileOffset": 0,
 					"symbolFileOffset": 0
 				},
