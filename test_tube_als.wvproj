@@ -46,7 +46,7 @@
 					"${project}/PetitModbus/exam/efm8bb1"
 				],
 				"optimization": {
-					"level": "size",
+					"level": "debug",
 					"message_length": true,
 					"char_is_signed": true,
 					"function_sections": true,
@@ -315,11 +315,11 @@
 		]
 	},
 	"flashConfig": {
-		"mcutype": "CH32V003",
+		"mcutype": "CH32V00x",
 		"address": "0x08000000",
 		"target_path": "obj/test_tube_als.hex",
 		"clkSpeed": "Middle",
-		"debug_interface_mode": "",
+		"debug_interface_mode": "1-wire serial",
 		"erase": true,
 		"program": true,
 		"verify": true,
@@ -396,8 +396,8 @@
 			"showDebugOutputTimestamps": true
 		},
 		"reserve": {
-			"PROGRAM_NAME": "obj/din_box_hmi.elf",
-			"PROJECT_ATTR": "din_box_hmi",
+			"PROGRAM_NAME": "obj/test_tube_als.elf",
+			"PROJECT_ATTR": "test_tube_als",
 			"PROJECT_BUILD_CONFIG_AUTO_ATTR": true,
 			"PROJECT_BUILD_CONFIG_ID_ATTR": "",
 			"ATTR_BUILD_BEFORE_LAUNCH_ATTR": 2,

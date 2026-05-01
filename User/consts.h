@@ -12,39 +12,27 @@
 #define C_TSL2561_CMD_ADDR_TLH (0x3u)
 #define C_TSL2561_CMD_ADDR_THL (0x4u)
 #define C_TSL2561_CMD_ADDR_THH (0x5u)
-#define C_TSL2651_CMD_ADDR_INT (0x6u)
+#define C_TSL2561_CMD_ADDR_INT (0x6u)
 #define C_TSL2561_CMD_ADDR_ID (0xAu)
 #define C_TSL2561_CMD_ADDR_D0L (0xCu)
 #define C_TSL2561_CMD_ADDR_D0H (0xDu)
 #define C_TSL2561_CMD_ADDR_D1L (0xEu)
 #define C_TSL2561_CMD_ADDR_D1H (0xFu)
 
-// system parameter bitfield indices
-#define C_CH455_ADDR_SP (0x48)
-#define C_CH455_SP_KOFF (7u)
-#define C_CH455_SP_INTENS (4u)
-//  enables the interrupt pin
-#define C_CH455_SP_7SEG (3u)
-#define C_CH455_SP_SLEEP (2u)
-#define C_CH455_SP_ENA (0u)
+#define C_TSL2561_CR_OFF (0x00u)
+#define C_TSL2561_CR_ON (0x03u)
 
-#define C_MY_CH455_SP ((2u << C_CH455_SP_INTENS) | (1 << C_CH455_SP_ENA))
+#define C_TSL2561_TM_GAIN_16 (1u << 4u)
+#define C_TSL2561_TM_MANUAL (1u << 3u)
+#define C_TSL2561_INTG_FAST (0b00u)
+#define C_TSL2561_INTG_MED (0b01u)
+#define C_TSL2561_INTG_SLOW (0b10u)
 
-// output data
-#define C_CH455_ADDR_W_IO0 (0x68)
-#define C_CH455_ADDR_W_IO1 (0x6A)
-#define C_CH455_ADDR_W_IO2 (0x6C)
-#define C_CH455_ADDR_W_IO3 (0x6E)
-
-// input data
-#define C_CH455_ADDR_I (0x4F)
-#define C_CH455_I_KP (0x40)
-#define C_CH455_I_UP  (0x1C)
-#define C_CH455_I_LFT (0x36)
-#define C_CH455_I_ENT (0x24)
-#define C_CH455_I_RHT (0X16)
-#define C_CH455_I_DWN (0x26)
-#define C_CH455_I_BAK (0x1E)
+#define C_TSL2561_INT_INTO_DIS (0b00u << 4u)
+#define C_TSL2561_INT_INTO_LVL (0b01u << 4u)
+#define C_TSL2561_INT_INTO_SMB (0b10u << 4u)
+#define C_TSL2561_INT_INTO_TST (0b11u << 4u)
+#define C_TSL2561_INT_PST_0 (0u)
 
 // loop constants
 #define C_SLOWER_CYCLE (4U)

@@ -23,8 +23,9 @@
  *This project is designed for the ch32v003JxMx SOP-8 package and the ch422 in
  *the SOP-16 package.
  *      Hardware connection:
- *            PC2 (6) -- SCL (5)
- *            PC1 (5) -- SDA (6)
+ *            PC4 (7) -- INT 
+ *            PC2 (6) -- SCL 
+ *            PC1 (5) -- SDA 
  *
  * 			  PA1 (1) -- UTX_2
  * 			  PA2 (3) -- Dir
@@ -57,7 +58,7 @@ volatile u32 modbus_timer;
  *
  * @return  none
  */
-void IIC_TX(u8 addr, u8 data)
+void IIC_TX(u8 addr, const u8* data, u8 count, u8 no_end)
 {
 	u32 start_time = t1_count;
 	while( I2C_GetFlagStatus( I2C1, I2C_FLAG_BUSY ) != RESET )
@@ -90,16 +91,27 @@ void IIC_TX(u8 addr, u8 data)
 		}
 	}
 
-	I2C_SendData( I2C1, data);
-
-	while( !I2C_CheckEvent( I2C1, I2C_EVENT_MASTER_BYTE_TRANSMITTED ) )
+	while (count-- != 0)
 	{
-		if (t1_count -  start_time > 1U)
+		I2C_SendData(I2C1, *(data++));
+	
+		while( !I2C_CheckEvent( I2C1, I2C_EVENT_MASTER_BYTE_TRANSMITTED ) )
+		{
+			if (t1_count -  start_time > 1U)
+			{
+				break;
+			}
+		}
+		if (t1_count - start_time > 1U)
 		{
 			break;
 		}
 	}
-	I2C_GenerateSTOP( I2C1, ENABLE);
+
+	if (no_end == 0)
+	{
+		I2C_GenerateSTOP( I2C1, ENABLE);
+	}
 }
 
 /*********************************************************************
@@ -109,15 +121,31 @@ void IIC_TX(u8 addr, u8 data)
  *
  * @return  none
  */
-void IIC_RX(u8 addr, u8 *data)
+void IIC_RX(u8 addr, u8 *data, u8 count, u8 stopped)
 {
 	u32 start_time = t1_count;
-	while( I2C_GetFlagStatus( I2C1, I2C_FLAG_BUSY ) != RESET )
+	// block commands require acknowledge
+	I2C_AcknowledgeConfig(I2C1, ENABLE);
+	if(stopped)
 	{
-		if (t1_count - start_time > 1U)
+		while(I2C_GetFlagStatus( I2C1, I2C_FLAG_BUSY ) != RESET )
 		{
-			I2C_GenerateSTOP(I2C1, ENABLE);
-			return;
+			if (t1_count - start_time > 1U)
+			{
+				I2C_GenerateSTOP(I2C1, ENABLE);
+				return;
+			}
+		}
+	}
+	else
+	{
+		while( !I2C_CheckEvent( I2C1, I2C_EVENT_MASTER_BYTE_TRANSMITTED ) )
+		{
+			if (t1_count -  start_time > 1U)
+			{
+				I2C_GenerateSTOP( I2C1, ENABLE);
+				return;
+			}
 		}
 	}
 
@@ -141,17 +169,24 @@ void IIC_RX(u8 addr, u8 *data)
 			return;
 		}
 	}
-	while (I2C_GetFlagStatus(I2C1, I2C_FLAG_RXNE) == RESET)
-	{
-		if (t1_count - start_time > 1U)
-		{
-			I2C_GenerateSTOP(I2C1, ENABLE);
-			return;
-		}
-	}
-	I2C_AcknowledgeConfig(I2C1, DISABLE);
 
-	*data = I2C_ReceiveData(I2C1);
+	while(count-- != 0)
+	{
+		while (I2C_GetFlagStatus(I2C1, I2C_FLAG_RXNE) == RESET)
+		{
+			if (t1_count - start_time > 1U)
+			{
+				I2C_GenerateSTOP(I2C1, ENABLE);
+				return;
+			}
+		}
+		// nack on the last bit
+		if (count == 0)
+		{
+			I2C_AcknowledgeConfig(I2C1, DISABLE);
+		}
+		*(data++) = I2C_ReceiveData(I2C1);
+	}
 
 	I2C_GenerateSTOP( I2C1, ENABLE);
 }
@@ -214,12 +249,26 @@ int main(void)
 	TIM_ClearFlag(TIM1, TIM_FLAG_Update);
 
 	//printf("IIC Host mode\r\n");
-	IIC_Init(400000u, C_CH455_ADDR_SP);
+	IIC_Init(400000u, C_TSL2561_ADDR);
 
-	IIC_TX(C_CH455_ADDR_SP, C_MY_CH455_SP);
+	// turn the light sensor on
+	IIC_TX(C_TSL2561_ADDR, (u8[]){C_TSL2561_CMD_REG | C_TSL2561_CMD_ADDR_CR, C_TSL2561_CR_ON}, 2, 0);
+	// configure for "15" bit conversion
+	IIC_TX(C_TSL2561_ADDR, (u8[]){C_TSL2561_CMD_REG | C_TSL2561_CMD_ADDR_TM, C_TSL2561_INTG_MED}, 2, 0);
+	// configure the interrupt to fire each time
+	IIC_TX(C_TSL2561_ADDR, (u8[]){C_TSL2561_CMD_REG | C_TSL2561_CMD_ADDR_INT, C_TSL2561_INT_INTO_LVL | C_TSL2561_INT_PST_0}, 2, 0);
+	/*
+	IIC_TX(C_TSL2561_ADDR, (u8[]){C_TSL2561_CMD_REG | C_TSL2561_CMD_ADDR_CR}, 1, 1);
+	u8 r = 0;
+	IIC_RX(C_TSL2561_ADDR, &r, 1);
+
+	if (r != 0x3u)
+	{
+		while(1u) ;
+	}
+	*/
 	while (1U)
 	{
-		u8 r = 0;
 		u8 iic_act = false;
 
 		// main loop timer overflow
@@ -235,13 +284,19 @@ int main(void)
 			// wfi stops the t1 system timer from time to time, so do not use it
 		}
 		M_MAIN_START();
-		// read keypresses every 4ms
-		// get the key input every 4ms
-		if ((t1_count & ((1U << 5U) - 1U)) == ((1U << 5U) - 1U))
+		// read integration results every 64ms
+		// uses the minus-one trick to find all-bits set for a certain binary division
+		if ((t1_count & ((1U << 9U) - 1U)) == ((1U << 9U) - 1U))
 		{
-			IIC_RX(C_CH455_ADDR_I, &r);
-			PetitInputRegisters[0U] = r;
+			u8 tmp[2u] = {0};
+			IIC_TX(C_TSL2561_ADDR, (u8[]){C_TSL2561_CMD_REG | C_TSL2561_CMD_CLEAR | C_TSL2561_CMD_WORD | C_TSL2561_CMD_ADDR_D0L}, 1, 1);
+			IIC_RX(C_TSL2561_ADDR, tmp, 2u, 0);
+			PetitInputRegisters[0u] = (u16)((u16)tmp[0u] | ((u16)tmp[1u] << 8u));
+			IIC_TX(C_TSL2561_ADDR, (u8[]){C_TSL2561_CMD_REG | C_TSL2561_CMD_CLEAR | C_TSL2561_CMD_WORD | C_TSL2561_CMD_ADDR_D1L}, 1, 1);
+			IIC_RX(C_TSL2561_ADDR, tmp, 2u, 0);
+			PetitInputRegisters[1u] = (u16)((u16)tmp[0u] | ((u16)tmp[1u] << 8u));
 			iic_act = true;
+			PetitRegisters[0u]++;
 		}
 
 		// process modbus

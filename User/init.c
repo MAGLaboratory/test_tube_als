@@ -26,12 +26,16 @@ void IIC_Init(u32 bound, u16 address)
 	RCC_APB2PeriphClockCmd( RCC_APB2Periph_GPIOC | RCC_APB2Periph_AFIO, ENABLE);
 	RCC_APB1PeriphClockCmd( RCC_APB1Periph_I2C1, ENABLE);
 
+	GPIO_PinRemapConfig(GPIO_FullRemap_I2C1, DISABLE);
+
+	// pin 6, PC2, SCL
 	GPIOC->BSHR = GPIO_Pin_2;
 	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_2;
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_OD;
 	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_2MHz;
 	GPIO_Init( GPIOC, &GPIO_InitStructure);
 
+	// pin 5, PC1, SDA
 	GPIOC->BSHR = GPIO_Pin_1;
 	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_1;
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_OD;
@@ -131,7 +135,11 @@ void APP_GPIO_Init(void)
 	//
 	// Pin 6 is handled by the I2C function
 	//
-	// Pin 7 is unused (PC4)
+	// Pin 7 is used as the interrupt pin
+	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_4;
+	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPU;
+	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_2MHz;
+	GPIO_Init(GPIOC, &GPIO_InitStructure);
 }
 
 /*********************************************************************
@@ -141,11 +149,10 @@ void APP_GPIO_Init(void)
  *
  * The system clock should be 4 kHz in order to satisfy the minimum 250 us
  * common denominator from T_1.5 and T_3.5 on modbus.
- * This would force the timer 1 ISR to divide the call rate by 4
  * {system clock} / {desired fcy} = {scaler}
- * 24e6 / 16e3 = 1 500
+ * 24e6 / 4e3 = 6 000
  * {prescaler} * {period} = {scale}
- * 15 * 100 / 1 500
+ * 60 * 100 / 6 000
  *
  * @return  none
  */
@@ -161,7 +168,7 @@ void TIME_Init(void)
 	TIM_TimeBaseInitStructure.TIM_ClockDivision = TIM_CKD_DIV1;
 	TIM_TimeBaseInitStructure.TIM_CounterMode = TIM_CounterMode_Up;
 	TIM_TimeBaseInitStructure.TIM_Period = 100U - 1U;
-	TIM_TimeBaseInitStructure.TIM_Prescaler = 15U - 1U;
+	TIM_TimeBaseInitStructure.TIM_Prescaler = 60U - 1U;
 	TIM_TimeBaseInitStructure.TIM_RepetitionCounter = 0U;
 	TIM_TimeBaseInit(TIM1, &TIM_TimeBaseInitStructure);
 
