@@ -288,13 +288,12 @@ int main(void)
 		// uses the minus-one trick to find all-bits set for a certain binary division
 		if ((t1_count & ((1U << 9U) - 1U)) == ((1U << 9U) - 1U))
 		{
-			u8 tmp[2u] = {0};
-			IIC_TX(C_TSL2561_ADDR, (u8[]){C_TSL2561_CMD_REG | C_TSL2561_CMD_CLEAR | C_TSL2561_CMD_WORD | C_TSL2561_CMD_ADDR_D0L}, 1, 1);
-			IIC_RX(C_TSL2561_ADDR, tmp, 2u, 0);
-			PetitInputRegisters[0u] = (u16)((u16)tmp[0u] | ((u16)tmp[1u] << 8u));
-			IIC_TX(C_TSL2561_ADDR, (u8[]){C_TSL2561_CMD_REG | C_TSL2561_CMD_CLEAR | C_TSL2561_CMD_WORD | C_TSL2561_CMD_ADDR_D1L}, 1, 1);
-			IIC_RX(C_TSL2561_ADDR, tmp, 2u, 0);
-			PetitInputRegisters[1u] = (u16)((u16)tmp[0u] | ((u16)tmp[1u] << 8u));
+			u8 tmp[5u] = {0};
+			IIC_TX(C_TSL2561_ADDR, (u8[]){C_TSL2561_CMD_REG | C_TSL2561_CMD_CLEAR | C_TSL2561_CMD_BLOCK | (C_TSL2561_CMD_ADDR_D0L - 1u)}, 1, 1);
+			IIC_RX(C_TSL2561_ADDR, tmp, 5u, 0);
+			// ADC order with block read is reversed?
+			PetitInputRegisters[1u] = (u16)((u16)tmp[1u] | ((u16)tmp[2u] << 8u));;
+			PetitInputRegisters[0u] = (u16)((u16)tmp[3u] | ((u16)tmp[4u] << 8u));
 			iic_act = true;
 			PetitRegisters[0u]++;
 		}
