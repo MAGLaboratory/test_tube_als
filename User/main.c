@@ -284,9 +284,8 @@ int main(void)
 			// wfi stops the t1 system timer from time to time, so do not use it
 		}
 		M_MAIN_START();
-		// read integration results every 64ms
-		// uses the minus-one trick to find all-bits set for a certain binary division
-		if ((t1_count & ((1U << 9U) - 1U)) == ((1U << 9U) - 1U))
+		// interrupt pin signals that the register should be read
+		if ((GPIOC->INDR & GPIO_Pin_4) == 0)
 		{
 			u8 tmp[5u] = {0};
 			IIC_TX(C_TSL2561_ADDR, (u8[]){C_TSL2561_CMD_REG | C_TSL2561_CMD_CLEAR | C_TSL2561_CMD_BLOCK | (C_TSL2561_CMD_ADDR_D0L - 1u)}, 1, 1);

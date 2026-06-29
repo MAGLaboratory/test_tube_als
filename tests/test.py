@@ -1,16 +1,16 @@
 import minimalmodbus
 
-instr = minimalmodbus.Instrument("COM3", 2)
+instr = minimalmodbus.Instrument("COM6", 2)
 instr.address = 2
 instr.serial.baudrate = 38400
 instr.serial.timeout = 0.5
 instr.debug = 1
 instr.clear_buffers_before_each_transaction = False
 
-print(instr.read_register(0x00, functioncode=4))
+print(instr.read_registers(0x00, 2, functioncode=4))
 
-instr.read_register(0x00)
+# instr.read_register(0x00)
 
-instr.write_registers(0, [0x065b, 0x4f66]);
+# instr.write_registers(0, [0x065b, 0x4f66]);
 
-instr.write_bit(0, 0)
+# instr.write_bit(0, 0)
